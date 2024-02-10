@@ -9,11 +9,6 @@
     <!-- Item panel button -->
     <v-btn
       color="primary"
-      fab
-      dark
-      fixed
-      bottom
-      right
       @click="
         itemSelection = true;
         itemSelected = null;
@@ -26,12 +21,16 @@
     <v-dialog width="500" v-model="itemSelection">
       <v-card elevation="3">
         <v-card-title>Select an item</v-card-title>
+
         <v-card-text>
           <!-- Search filter -->
           <v-text-field
             v-model="itemsSearchFilter"
-            label="Filter"
-          ></v-text-field>
+            label="Search item"
+            outlined
+            clearable
+            append-inner-icon="mdi-magnify"
+          />
 
           <!-- Item list -->
           <v-list style="height: 500px; overflow-y: auto">
@@ -64,6 +63,7 @@
 
 <script>
 import { Network } from "vis-network";
+import { DataSet } from "vis-data";
 
 import { convertToItemObjects, itemsMemory } from "./ItemsGraph";
 import axios from "axios";
@@ -73,19 +73,29 @@ export default {
     return {
       itemSelection: true,
       itemSelected: null,
-      items: ["SOLEIL (ESPACE)"],
+      items: [
+        "SOLEIL (ESPACE)",
+        "POLITIQUE",
+        "ENVIRONNEMENT",
+        "LANGAGE NATUREL",
+      ],
       itemsSearchFilter: "",
       graphItem: null,
+      nodes: null,
+      edges: null,
+      network: null,
     };
   },
   mounted() {
     this.itemSelection = true;
+    this.nodes = new DataSet([]);
+    this.edges = new DataSet([]);
+    this.initGraph();
   },
   methods: {
     displayLinkedItems() {
       if (!this.itemSelected) return;
 
-      console.log("Selected item: ", this.itemSelected);
       // Fetch linked items
       axios
         .get(`/elements/name/${this.itemSelected}`)
@@ -94,15 +104,40 @@ export default {
             this.itemSelected,
             response.data
           );
-          this.displayGraph(this.graphItem);
+          this.addNodesAndEdges(this.graphItem);
         })
         .catch((error) => {
           console.error(error);
         });
     },
 
-    displayGraph(graphItem) {
-      const data = graphItem.convertToVisData();
+    addNodesAndEdges(graphItem, isUpdate = false) {
+      const nodes = [];
+      const edges = [];
+      graphItem.convertToVisData(nodes, edges);
+
+      // Update the nodes and edges datasets
+      if (isUpdate) {
+        // Remove the graphItem node
+        const filteredNodes = nodes.filter((node) => {
+          return node.label !== graphItem.label;
+        });
+        this.nodes.add(filteredNodes);
+        this.edges.add(edges);
+      } else {
+        this.nodes.update(nodes);
+        this.edges.update(edges);
+      }
+
+      console.log("Nodes: ", nodes);
+      console.log("Edges: ", edges);
+    },
+
+    initGraph() {
+      const data = {
+        nodes: this.nodes,
+        edges: this.edges,
+      };
 
       // create a network
       const container = document.getElementById("graph");
@@ -112,29 +147,28 @@ export default {
           enabled: true,
         },
       };
-      const network = new Network(container, data, options);
+      this.network = new Network(container, data, options);
 
-      network.on("click", (params) => {
+      this.network.on("click", (params) => {
         if (params.nodes.length > 0) this.addLinkedItemsToItem(params.nodes[0]);
       });
     },
 
     addLinkedItemsToItem(itemName) {
-      console.log("Selected item: ", itemName);
       const selectedItem = itemsMemory[itemName];
       if (!selectedItem) {
         console.error("Item not found in memory: ", itemName);
         return;
       }
 
+      if (selectedItem.links.length > 0) return;
+
       axios
         .get(`/elements/name/${itemName}`)
         .then((response) => {
-          this.graphItem = convertToItemObjects(
-            this.itemSelected,
-            response.data
-          );
-          this.displayGraph(this.graphItem);
+          if (response.data.length === 0) return;
+          selectedItem.addLinks(response.data);
+          this.addNodesAndEdges(selectedItem, true);
         })
         .catch((error) => {
           console.error(error);
@@ -144,6 +178,8 @@ export default {
 
   computed: {
     filteredItems() {
+      if (!this.itemsSearchFilter) return this.items;
+
       return this.items.filter((item) =>
         item.toLowerCase().includes(this.itemsSearchFilter.toLowerCase())
       );
@@ -152,6 +188,9 @@ export default {
 
   watch: {
     itemSelected() {
+      this.nodes.clear();
+      this.edges.clear();
+      this.initGraph();
       this.displayLinkedItems();
     },
   },

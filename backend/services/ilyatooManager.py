@@ -45,13 +45,27 @@ def login(USERNAME, PASSWORD):
 
 
 def get_linked_elements(element_name):
-    elements_url = url + f"/proposition/api/action-objet/CONCERNER/{element_name}"
-    response = requests.get(elements_url, cookies={"PHPSESSID": token})
+    verbs = [
+        "CONCERNER",
+        "FAIRE PARTIE",
+        "TOURNER",
+        "ÊTRE (ATTRIBUT)",
+        "PARLER",
+        "ÉCRIRE",
+    ]
 
-    if response.status_code != 200:
-        raise ValueError(
-            f"Failed to get linked '{element_name}' elements from Ilyatoo. Status code: "
-            + colored(response.status_code, ERROR_COLOR)
-        )
+    response = []
 
-    return response.json()
+    for verb in verbs:
+        elements_url = url + f"/proposition/api/action-objet/{verb}/{element_name}"
+        verb_response = requests.get(elements_url, cookies={"PHPSESSID": token})
+
+        if verb_response.status_code != 200:
+            raise ValueError(
+                f"Failed to get linked '{element_name}' elements from Ilyatoo. Status code: "
+                + colored(verb_response.status_code, ERROR_COLOR)
+            )
+
+        response += verb_response.json()[:30]
+
+    return response

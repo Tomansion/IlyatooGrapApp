@@ -1,8 +1,9 @@
 const itemsMemory = {};
 
 class Item {
-  constructor(label, parent = null) {
+  constructor(label, type, parent = null) {
     this.label = label;
+    this.type = type;
     this.parent = parent;
     this.links = [];
   }
@@ -24,7 +25,8 @@ class Item {
           linkItemTargetLabel = itemLink[type].id;
           break;
         }
-        if (!itemsMemory[label]) itemsMemory[label] = item;
+        if (!itemsMemory[linkItemTargetLabel])
+          itemsMemory[linkItemTargetLabel] = new Item(linkItemTargetLabel);
       }
 
       if (!linkItemTargetLabel) {
@@ -33,7 +35,14 @@ class Item {
         return;
       }
 
-      item.addItemLink(linkItemTargetLabel, linkLabel);
+      // Get or create the item and the link
+      let itemTarget = itemsMemory[linkItemTargetLabel];
+      if (!itemTarget) {
+        itemTarget = new Item(linkItemTargetLabel);
+        itemsMemory[linkItemTargetLabel] = itemTarget;
+      }
+
+      this.addItemLink(itemTarget, linkLabel);
     });
   }
 
@@ -61,7 +70,8 @@ class Item {
 
     // Search if we already have an item with the same label
     const existingItem = this.links.find(
-      (link) => link.itemTarget.label === item.label
+      (link) =>
+        link.itemTarget.label === item.label && link.linkLabel === linkLabel
     );
     if (existingItem) {
       console.log("Already in links");
@@ -72,24 +82,21 @@ class Item {
     this.links.push(new Link(item, linkLabel));
   }
 
-  convertToVisData() {
-    const nodes = [];
-    const edges = [];
-
+  convertToVisData(nodes, edges) {
     // Add the current item
-    if (!this.parent) nodes.push({ id: this.label, label: this.label });
+    nodes.push({ id: this.label, label: this.label });
 
     // Add the links
     this.links.forEach((link) => {
-      nodes.push({ id: link.itemTarget.label, label: link.itemTarget.label });
+      link.itemTarget.convertToVisData(nodes, edges);
+
       edges.push({
         from: this.label,
         to: link.itemTarget.label,
         label: link.linkLabel,
+        arrows: "from",
       });
     });
-
-    return { nodes, edges };
   }
 }
 
@@ -102,7 +109,7 @@ class Link {
 
 const convertToItemObjects = (label, items) => {
   // Create the initial item
-  let item = new Item(label);
+  let item = itemsMemory[label];
   if (!item) {
     item = new Item(label);
     itemsMemory[label] = item;
@@ -120,9 +127,11 @@ const convertToItemObjects = (label, items) => {
     ];
 
     let linkItemTargetLabel = null;
+    let itemType = null;
     for (let type of possibleTypes) {
       if (type in itemLink) {
         linkItemTargetLabel = itemLink[type].id;
+        itemType = type;
         break;
       }
     }
@@ -136,7 +145,7 @@ const convertToItemObjects = (label, items) => {
     // Create the item and the link
     let itemTarget = itemsMemory[linkItemTargetLabel];
     if (!itemTarget) {
-      itemTarget = new Item(linkItemTargetLabel);
+      itemTarget = new Item(linkItemTargetLabel, itemType);
       itemsMemory[linkItemTargetLabel] = itemTarget;
     }
 
