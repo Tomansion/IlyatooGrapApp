@@ -4,12 +4,12 @@ info:
   description: "The Ilyatoo Graph app API"
   version: "0.0.0"
 paths:
-  /elements/name/{name}:
+  /elements/name/{element_name}:
     get:
       description: Get the elements linked to an element by its name
       operationId: controller.elements.get_element_by_name
       parameters:
-        - name: name
+        - name: element_name
           in: path
           description: The element name
           required: true

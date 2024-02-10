@@ -58,4 +58,8 @@ def get_linked_elements(element_name):
             + colored(response.status_code, ERROR_COLOR)
         )
 
+    print(f" - Got linked elements for {colored(element_name, DEBUG_COLOR)}")
+    print(f" - Response: {colored(response.json(), DEBUG_COLOR)}")
+    print(f" - Status code: {colored(response.status_code, DEBUG_COLOR)}")
+
     return response.json()

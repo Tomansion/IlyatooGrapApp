@@ -1,20 +1,28 @@
 <template>
   <!-- Full page Graph Panel -->
-  <div
-    id="graphPanel"
-    class="d-flex align-center justify-center"
-    style="height: 100%"
-  >
+  <div id="graphPanel" class="" style="height: 100%">
     <!-- Header -->
     <v-app-bar :elevation="3">
       <v-app-bar-title>Ilyatoo Graph visualization</v-app-bar-title>
     </v-app-bar>
 
-    <!-- Item selection panel -->
-    <!-- <v-overlay :value="itemSelection" opacity="0.6">
-    
-    </v-overlay> -->
+    <!-- Item panel button -->
+    <v-btn
+      color="primary"
+      fab
+      dark
+      fixed
+      bottom
+      right
+      @click="
+        itemSelection = true;
+        itemSelected = null;
+      "
+    >
+      <v-icon>mdi-plus</v-icon>
+    </v-btn>
 
+    <!-- Item selection panel -->
     <v-dialog width="500" v-model="itemSelection">
       <v-card elevation="3">
         <v-card-title>Select an item</v-card-title>
@@ -30,7 +38,10 @@
             <v-list-item
               v-for="(item, index) in filteredItems"
               :key="index"
-              @click="itemSelection = false"
+              @click="
+                itemSelection = false;
+                itemSelected = item;
+              "
             >
               <v-list-item-title>{{ item }}</v-list-item-title>
             </v-list-item>
@@ -53,43 +64,14 @@
 <script>
 import { Network } from "vis-network";
 import { DataSet } from "vis-data";
+import axios from "axios";
 
 export default {
   data() {
     return {
-      itemSelection: false,
+      itemSelection: true,
       itemSelected: null,
-      items: [
-        "Soleil (ESPACE)",
-        "Soleil (ESPACE)",
-        "Soleil (ESPACE)",
-        "Soleil (ESPACE)",
-        "Soleil (ESPACE)",
-        "Soleil (ESPACE)",
-        "Soleil (ESPACE)",
-        "Soleil (ESPACE)",
-        "Soleil (ESPACE)",
-        "Soleil (ESPACE)",
-        "Soleil (ESPACE)",
-        "Soleil (ESPACE)",
-        "Soleil (ESPACE)",
-        "Soleil (ESPACE)",
-        "Soleil (ESPACE)",
-        "Soleil (ESPACE)",
-        "Soleil (ESPACE)",
-        "Soleil (ESPACE)",
-        "Soleil (ESPACE)",
-        "Soleil (ESPACE)",
-        "Soleil (ESPACE)",
-        "Soleil (ESPACE)",
-        "Soleil (ESPACE)",
-        "Soleil (ESPACE)",
-        "Soleil (ESPACE)",
-        "Soleil (ESPACE)",
-        "Soleil (ESPACE)",
-        "Soleil (ESPACE)",
-        "Soleil (ESPACE)",
-      ],
+      items: ["Soleil (ESPACE)"],
       itemsSearchFilter: "",
     };
   },
@@ -99,6 +81,20 @@ export default {
     this.itemSelection = true;
   },
   methods: {
+    displayLinkedItems() {
+      if (!this.itemSelected) return;
+
+      console.log("Selected item: ", this.itemSelected);
+      // Fetch linked items
+      axios
+        .get(`/elements/name/${this.itemSelected}`)
+        .then((response) => {
+          console.log(response.data);
+        })
+        .catch((error) => {
+          console.error(error);
+        });
+    },
     setupGraph() {
       const nodes = new DataSet([
         { id: 1, label: "Node 1" },
@@ -129,14 +125,9 @@ export default {
           enabled: true,
         },
       };
-      const network = new Network(container, data, options);
+      new Network(container, data, options);
 
-      network.on("click", (params) => {
-        this.itemSelected = params.nodes[0];
-        console.log(this.itemSelected);
-        this.itemSelection = !this.itemSelection;
-        console.log(this.itemSelection);
-      });
+      // network.on("click", (params) => {});
     },
   },
 
@@ -145,6 +136,12 @@ export default {
       return this.items.filter((item) =>
         item.toLowerCase().includes(this.itemsSearchFilter.toLowerCase())
       );
+    },
+  },
+
+  watch: {
+    itemSelected() {
+      this.displayLinkedItems();
     },
   },
 };
