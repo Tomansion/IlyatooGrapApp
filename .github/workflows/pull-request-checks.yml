@@ -1,0 +1,99 @@
+name: Pull Request Checks
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+
+jobs:
+  black-format-check: # Check that the back codebase is formatted with black
+    name: Black format check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.8
+      - name: Install dependencies and check black format
+        run: |
+          cd back
+          python -m pip install --upgrade pip
+          pip install black
+          black --check --diff .
+
+  prettier-check: # Check that the front codebase is formatted with prettier
+    name: Prettier format check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Node 18
+        uses: actions/setup-node@v2
+        with:
+          node-version: 18
+      - name: Install dependencies and check prettier format
+        run: cd front && npm install && npm run prettier:check
+
+  cspell-check: # Check that the project does not contain spelling errors
+    name: CSpell check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Node 18
+        uses: actions/setup-node@v2
+        with:
+          node-version: 18
+      - name: Install dependencies and check prettier format
+        run: npm install -g cspell && cspell --no-summary --no-progress --no-color .
+
+  python-tests: # Install dependencies and run tests with pytest
+    name: Python tests
+    needs:
+      [black-format-check, prettier-check, cspell-check]
+    runs-on: ubuntu-latest
+
+    permissions:
+      pull-requests: write
+      contents: read
+
+    env:
+      MUSEUMGO_ARANGODB_HOST: ${{ secrets.ARANGODB_TEST_HOST }}
+      MUSEUMGO_ARANGODB_PORT: ${{ secrets.ARANGODB_TEST_PORT }}
+      MUSEUMGO_ARANGODB_DATABASE: ${{ secrets.ARANGODB_TEST_DATABASE }}
+      MUSEUMGO_ARANGODB_USER: ${{ secrets.ARANGODB_TEST_USER }}
+      MUSEUMGO_ARANGODB_PASSWORD: ${{ secrets.ARANGODB_TEST_PASSWORD }}
+
+    steps:
+      # Run the tests
+      - uses: actions/checkout@v3
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+      - name: Install dependencies
+        run: |
+          cd back
+          python -m pip install --upgrade pip
+          pip install pytest pytest-cov
+          pip install -r requirements.txt
+      - name: Test with pytest
+        run: |
+          cd back
+          pytest tests/ --cov=. --cov-report=xml
+      # Write the coverage report into the pull request
+      - name: Generate coverage Report
+        uses: irongut/CodeCoverageSummary@v1.3.0
+        with:
+          filename: "back/coverage.xml"
+          badge: true
+          format: "markdown"
+          output: "both"
+          threshold: 80
+          fail: true
+      - name: Add coverage to PR comment
+        uses: mshick/add-pr-comment@v2
+        with:
+          message-path: code-coverage-results.md
+          refresh-message-position: true

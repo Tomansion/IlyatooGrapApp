@@ -1,0 +1,53 @@
+{
+  "version": "0.2",
+  "language": "en,fr",
+  "dictionaries": [
+    "typescript",
+    "node",
+    "html",
+    "css",
+    "python"
+  ],
+  "words": [
+    "axios",
+    "connexion",
+    "ESPACE",
+    "htmlcov",
+    "ilyatoo",
+    "Ilyatoo",
+    "openapi",
+    "PHPSESSID",
+    "pinia",
+    "pycache",
+    "pytest",
+    "SOLEIL",
+    "termcolor",
+    "Vetur",
+    "Vuetify",
+    "vuex",
+    "websrv",
+    "werkzeug"
+  ],
+  "flagWords": [],
+  "ignorePaths": [
+    "*.svg",
+    "*.json",
+    "*.png",
+    "*.xml",
+    "htmlcov",
+    "config.ini",
+    "__pycache__",
+    "workart.yaml",
+    "test.yaml",
+    ".github/workflows",
+    "node_modules",
+    "TODO",
+    "back/requirements.txt",
+    "dist/",
+    "build/",
+    "images/",
+    "assets/",
+    "static/",
+    "public/"
+  ]
+}

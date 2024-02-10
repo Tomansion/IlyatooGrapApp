@@ -1,0 +1,74 @@
+openapi: 3.0.3
+info:
+  title: "API Ilyatoo Graph app"
+  description: "The Ilyatoo Graph app API"
+  version: "0.0.0"
+paths:
+  /elements/name/{name}:
+    get:
+      description: Get the elements linked to an element by its name
+      operationId: controller.elements.get_element_by_name
+      parameters:
+        - name: name
+          in: path
+          description: The element name
+          required: true
+          schema:
+            type: string
+            example: "SOLEIL (ESPACE)"
+      responses:
+        "200":
+          description: List of elements
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Element"
+
+components:
+  schemas:
+    Element:
+      type: object
+      description: An Ilyatoo element
+      properties:
+        id:
+          type: number
+          description: The element ID
+        fkSujetObjet:
+          type: object
+          properties:
+            id:
+              type: string
+              example: "NEPTUNE"
+            nomLong:
+              type: string
+        fkAction:
+          type: object
+          properties:
+            id:
+              type: string
+              example: "TOURNER"
+        preposition:
+          type: object
+          properties:
+            id:
+              type: string
+              example: "AUTOUR DU"
+            natureGrammaticale:
+              type: string
+              example: "LOCUTION PRÉPOSITIVE"
+        fkComplementObjet:
+          type: object
+          properties:
+            id:
+              type: string
+              example: "SOLEIL (ESPACE)"
+            nomLong:
+              type: string
+      required:
+        - id
+        - fkSujetObjet
+        - fkAction
+        - preposition
+        - fkComplementObjet
