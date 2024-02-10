@@ -65,7 +65,7 @@
 <script>
 import { Network } from "vis-network";
 
-import { convertToItemObjects } from "./ItemsGraph";
+import { convertToItemObjects, itemsMemory } from "./ItemsGraph";
 import axios from "axios";
 
 export default {
@@ -112,9 +112,33 @@ export default {
           enabled: true,
         },
       };
-      new Network(container, data, options);
+      const network = new Network(container, data, options);
 
-      // network.on("click", (params) => {});
+      network.on("click", (params) => {
+        if (params.nodes.length > 0) this.addLinkedItemsToItem(params.nodes[0]);
+      });
+    },
+
+    addLinkedItemsToItem(itemName) {
+      console.log("Selected item: ", itemName);
+      const selectedItem = itemsMemory[itemName];
+      if (!selectedItem) {
+        console.error("Item not found in memory: ", itemName);
+        return;
+      }
+
+      axios
+        .get(`/elements/name/${itemName}`)
+        .then((response) => {
+          this.graphItem = convertToItemObjects(
+            this.itemSelected,
+            response.data
+          );
+          this.displayGraph(this.graphItem);
+        })
+        .catch((error) => {
+          console.error(error);
+        });
     },
   },
 

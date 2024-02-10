@@ -1,3 +1,5 @@
+const itemsMemory = {};
+
 class Item {
   constructor(label, parent = null) {
     this.label = label;
@@ -5,9 +7,39 @@ class Item {
     this.links = [];
   }
 
-  addItemLink(itemLabel, linkLabel) {
-    if (!itemLabel) {
-      console.error("No item label provided");
+  addLinks(items) {
+    items.forEach((itemLink) => {
+      const linkLabel = itemLink.fkAction.id;
+
+      const possibleTypes = [
+        "fkSujetObjet",
+        "fkSujetPersonne",
+        "fkSujetAction",
+        "fkSujetFrancais",
+      ];
+
+      let linkItemTargetLabel = null;
+      for (let type of possibleTypes) {
+        if (type in itemLink) {
+          linkItemTargetLabel = itemLink[type].id;
+          break;
+        }
+        if (!itemsMemory[label]) itemsMemory[label] = item;
+      }
+
+      if (!linkItemTargetLabel) {
+        console.error("No link item target label found");
+        console.error(itemLink);
+        return;
+      }
+
+      item.addItemLink(linkItemTargetLabel, linkLabel);
+    });
+  }
+
+  addItemLink(item, linkLabel) {
+    if (!item) {
+      console.error("No item provided");
       return;
     }
 
@@ -19,7 +51,7 @@ class Item {
     // Search if we already are not linked through the parent
     if (this.parent) {
       const parentLink = this.parent.links.find(
-        (link) => link.itemTarget.label === itemLabel
+        (link) => link.itemTarget.label === item.label
       );
       if (parentLink) {
         console.log("Already in parent");
@@ -29,16 +61,15 @@ class Item {
 
     // Search if we already have an item with the same label
     const existingItem = this.links.find(
-      (link) => link.itemTarget.label === itemLabel
+      (link) => link.itemTarget.label === item.label
     );
     if (existingItem) {
       console.log("Already in links");
       return;
     }
 
-    // Create the item and the link
-    const itemTarget = new Item(itemLabel, this);
-    this.links.push(new Link(itemTarget, linkLabel));
+    item.parent = this;
+    this.links.push(new Link(item, linkLabel));
   }
 
   convertToVisData() {
@@ -46,7 +77,7 @@ class Item {
     const edges = [];
 
     // Add the current item
-    nodes.push({ id: this.label, label: this.label });
+    if (!this.parent) nodes.push({ id: this.label, label: this.label });
 
     // Add the links
     this.links.forEach((link) => {
@@ -71,7 +102,11 @@ class Link {
 
 const convertToItemObjects = (label, items) => {
   // Create the initial item
-  const item = new Item(label);
+  let item = new Item(label);
+  if (!item) {
+    item = new Item(label);
+    itemsMemory[label] = item;
+  }
 
   // Add the links
   items.forEach((itemLink) => {
@@ -98,10 +133,17 @@ const convertToItemObjects = (label, items) => {
       return;
     }
 
-    item.addItemLink(linkItemTargetLabel, linkLabel);
+    // Create the item and the link
+    let itemTarget = itemsMemory[linkItemTargetLabel];
+    if (!itemTarget) {
+      itemTarget = new Item(linkItemTargetLabel);
+      itemsMemory[linkItemTargetLabel] = itemTarget;
+    }
+
+    item.addItemLink(itemTarget, linkLabel);
   });
 
   return item;
 };
 
-export { convertToItemObjects, Item, Link };
+export { convertToItemObjects, itemsMemory, Item, Link };

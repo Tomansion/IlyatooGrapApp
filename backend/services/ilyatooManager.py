@@ -45,7 +45,7 @@ def login(USERNAME, PASSWORD):
 
 
 def get_linked_elements(element_name):
-    elements_url = url + f"/proposition/api/action-objet/TOURNER/{element_name}"
+    elements_url = url + f"/proposition/api/action-objet/CONCERNER/{element_name}"
     response = requests.get(elements_url, cookies={"PHPSESSID": token})
 
     if response.status_code != 200:
