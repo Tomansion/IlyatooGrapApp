@@ -51,14 +51,12 @@ class Item {
     // Add the links
     this.links.forEach((link) => {
       nodes.push({ id: link.itemTarget.label, label: link.itemTarget.label });
-      edges.push({ from: this.label, to: link.itemTarget.label });
+      edges.push({
+        from: this.label,
+        to: link.itemTarget.label,
+        label: link.linkLabel,
+      });
     });
-
-    // Add the parent
-    if (this.parent) {
-      nodes.push({ id: this.parent.label, label: this.parent.label });
-      edges.push({ from: this.label, to: this.parent.label });
-    }
 
     return { nodes, edges };
   }
