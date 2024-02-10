@@ -22,7 +22,8 @@ class Item {
       let linkItemTargetLabel = null;
       for (let type of possibleTypes) {
         if (type in itemLink) {
-          linkItemTargetLabel = itemLink[type].id;
+          if ("nom" in itemLink[type]) linkItemTargetLabel = itemLink[type].nom;
+          else linkItemTargetLabel = itemLink[type].id;
           break;
         }
         if (!itemsMemory[linkItemTargetLabel])
