@@ -41,15 +41,11 @@ def login(USERNAME, PASSWORD):
             + colored(login_response.status_code, ERROR_COLOR)
         )
 
-    print(f" - Logged in as {colored(USERNAME, DEBUG_COLOR)}")
-    print(f" - Token: {colored(login_response.cookies['PHPSESSID'], DEBUG_COLOR)}")
-
     return login_response.cookies["PHPSESSID"]
 
 
 def get_linked_elements(element_name):
     elements_url = url + f"/proposition/api/action-objet/TOURNER/{element_name}"
-
     response = requests.get(elements_url, cookies={"PHPSESSID": token})
 
     if response.status_code != 200:
@@ -57,9 +53,5 @@ def get_linked_elements(element_name):
             f"Failed to get linked '{element_name}' elements from Ilyatoo. Status code: "
             + colored(response.status_code, ERROR_COLOR)
         )
-
-    print(f" - Got linked elements for {colored(element_name, DEBUG_COLOR)}")
-    print(f" - Response: {colored(response.json(), DEBUG_COLOR)}")
-    print(f" - Status code: {colored(response.status_code, DEBUG_COLOR)}")
 
     return response.json()
